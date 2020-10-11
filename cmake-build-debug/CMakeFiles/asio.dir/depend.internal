@@ -3,6 +3,8 @@
 
 CMakeFiles/asio.dir/main.cpp.obj
  C:/Users/chy/CLionProjects/asio/main.cpp
+ C:/Users/chy/CLionProjects/asio/mingw.invoke.h
+ C:/Users/chy/CLionProjects/asio/mingw.thread.h
  C:/Users/chy/Desktop/Lot_c/nlohmann/json.hpp
  C:/Users/chy/Desktop/boost_1_72_0/boost/array.hpp
  C:/Users/chy/Desktop/boost_1_72_0/boost/asio.hpp
@@ -536,7 +538,6 @@ CMakeFiles/asio.dir/main.cpp.obj
  C:/Users/chy/Desktop/boost_1_72_0/boost/config/detail/select_platform_config.hpp
  C:/Users/chy/Desktop/boost_1_72_0/boost/config/detail/select_stdlib_config.hpp
  C:/Users/chy/Desktop/boost_1_72_0/boost/config/detail/suffix.hpp
- C:/Users/chy/Desktop/boost_1_72_0/boost/config/header_deprecated.hpp
  C:/Users/chy/Desktop/boost_1_72_0/boost/config/helper_macros.hpp
  C:/Users/chy/Desktop/boost_1_72_0/boost/config/no_tr1/cmath.hpp
  C:/Users/chy/Desktop/boost_1_72_0/boost/config/no_tr1/complex.hpp
@@ -573,6 +574,7 @@ CMakeFiles/asio.dir/main.cpp.obj
  C:/Users/chy/Desktop/boost_1_72_0/boost/config/stdlib/vacpp.hpp
  C:/Users/chy/Desktop/boost_1_72_0/boost/config/stdlib/xlcpp_zos.hpp
  C:/Users/chy/Desktop/boost_1_72_0/boost/config/user.hpp
+ C:/Users/chy/Desktop/boost_1_72_0/boost/config/warning_disable.hpp
  C:/Users/chy/Desktop/boost_1_72_0/boost/config/workaround.hpp
  C:/Users/chy/Desktop/boost_1_72_0/boost/container/container_fwd.hpp
  C:/Users/chy/Desktop/boost_1_72_0/boost/container/detail/std_fwd.hpp
@@ -1367,7 +1369,8 @@ CMakeFiles/asio.dir/main.cpp.obj
  C:/Users/chy/Desktop/boost_1_72_0/boost/system/error_code.hpp
  C:/Users/chy/Desktop/boost_1_72_0/boost/system/system_error.hpp
  C:/Users/chy/Desktop/boost_1_72_0/boost/throw_exception.hpp
- C:/Users/chy/Desktop/boost_1_72_0/boost/timer.hpp
+ C:/Users/chy/Desktop/boost_1_72_0/boost/timer/config.hpp
+ C:/Users/chy/Desktop/boost_1_72_0/boost/timer/timer.hpp
  C:/Users/chy/Desktop/boost_1_72_0/boost/type.hpp
  C:/Users/chy/Desktop/boost_1_72_0/boost/type_index.hpp
  C:/Users/chy/Desktop/boost_1_72_0/boost/type_index/ctti_type_index.hpp

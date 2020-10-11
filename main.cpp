@@ -4,13 +4,14 @@
 #define BOOST_CHRONO_HEADER_ONLY
 #define BOOST_CHRONO_EXTENSIONS
 #define BOOST_ASIO_ENABLE_HANDLER_TRACKING
+
 #include <boost/chrono.hpp>
 #include <iostream>
 #include <boost/asio.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <boost/asio/system_timer.hpp>
 #include <boost/asio/high_resolution_timer.hpp>
-#include <boost/timer.hpp>
+#include <boost/timer/timer.hpp>
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
 #include <boost/system/error_code.hpp>
@@ -20,165 +21,96 @@
 #include <string>
 #include <vector>
 #include "nlohmann/json.hpp"
+
 using namespace boost::asio;
-using namespace boost::chrono;
-using namespace boost::system;
 using namespace boost;
 using json = nlohmann::json;
-using  std::cin;
+using std::cin;
 using std::cout;
 using std::endl;
 using std::vector;
 using boost::shared_ptr;
-seconds operator"" _s(unsigned long long n) {
-    return seconds(n);
+using boost::asio::ip::udp;
+
+boost::chrono::seconds operator "" _s(unsigned long long n) {
+    return boost::chrono::seconds(n);
 }
-class shared_const_buffer
-{
+
+class shared_const_buffer {
 public:
     // Construct from a std::string.
-    explicit shared_const_buffer(const std::string& data)
+    explicit shared_const_buffer(const std::string &data)
             : data_(new std::vector<char>(data.begin(), data.end())),
-              buffer_(boost::asio::buffer(*data_))
-    {
+              buffer_(boost::asio::buffer(*data_)) {
     }
 
     // Implement the ConstBufferSequence requirements.
     typedef boost::asio::const_buffer value_type;
-    typedef const boost::asio::const_buffer* const_iterator;
-    const boost::asio::const_buffer* begin() const { return &buffer_; }
-    const boost::asio::const_buffer* end() const { return &buffer_ + 1; }
+    typedef const boost::asio::const_buffer *const_iterator;
+
+    const boost::asio::const_buffer *begin() const { return &buffer_; }
+
+    const boost::asio::const_buffer *end() const { return &buffer_ + 1; }
 
 private:
     std::shared_ptr<std::vector<char>> data_;
     boost::asio::const_buffer buffer_;
 };
-class timerWithFunc
-{
-private:
-    int m_count = 0;
-    int m_count_max = 0;
-    function<void()> m_f;
-    steady_timer m_t;
-public:
-    template<typename F>
-    timerWithFunc(io_service& io, int x, F func) :m_count_max(x), m_f(func), m_t(io, 5_s) {
-        init();
+
+
+std::string messFromGnu;
+
+typedef ip::tcp::endpoint endpoint_type;
+typedef ip::address address_type;
+typedef ip::tcp::socket socket_type;
+typedef shared_ptr<socket_type> sock_ptr;
+typedef vector<char> buffer_type;
+typedef std::function<void(const boost::system::error_code &)> timer_callback;
+
+#include "mingw.thread.h"
+
+void timerC(sock_ptr sock) {
+    io_context io;
+    steady_timer tt(io, 10_s);
+    json j = R"({"protocol": "keepalive"})"_json;
+    std::string s = j.dump();
+    while (1) {
+        cout << "in thread" << endl;
+        tt.wait();
+        std::size_t length2 = s.length();
+        sock->send(buffer((void *) &length2, sizeof(length2)));
+        shared_const_buffer buffer_1(s);
+        sock->send(buffer_1);
+        tt.expires_after(boost::chrono::seconds(10));
     }
-private:
-    typedef timerWithFunc this_type;
-    void init() {
-        m_t.async_wait(boost::bind(&this_type::handler, this, boost::asio::placeholders::error));
-    }
+}
 
-    void handler(const error_code&)
-    {
-        m_f();
-        //m_t.expires_from_now(milliseconds(1));
-        //m_t.async_wait(bind(&this_type::handler, this, boost::asio::placeholders::error));
-    }
-};
 
-class client {
-    typedef client this_type;
-    typedef ip::tcp::endpoint endpoint_type;
-    typedef ip::address address_type;
-    typedef ip::tcp::socket socket_type;
-    typedef shared_ptr<socket_type> sock_ptr;
-    typedef vector<char> buffer_type;
+int main() {
+    boost::asio::io_context io_context;
+    udp::socket sock2(io_context, udp::endpoint(ip::address::from_string("192.168.43.161"), 1666));
+    sock_ptr sock(new socket_type(io_context));
+    sock->connect(endpoint_type(address_type::from_string("192.168.43.162"), 8899));
 
-private:
-    io_service	m_io;
-    buffer_type		m_buf;
-    endpoint_type	m_ep;
-    steady_timer m_tm;
-    json mess;
-public:
-    client(json mess2) :
-            m_buf(5, 0),
-            m_ep(address_type::from_string("192.168.3.5"), 0x1234),
-           // m_ep(address_type::from_string("192.168.31.96"), 8899),
-            m_tm(m_io, 3_s)
-            , mess(mess2)
-    {
+    std::thread thread01(timerC, sock);
+    thread01.detach();
+    cout << "in main" << endl;
 
-        start();
-    }
+    while (1) {
+        char data[1024];
+        udp::endpoint sender_endpoint;
+        sock2.receive_from(
+                boost::asio::buffer(data, 1024), sender_endpoint);
+        cout << data << endl;
 
-    void run()
-    {
-        m_io.run();
-    }
+        messFromGnu = data;
 
-    void start()
-    {
-        sock_ptr sock(new socket_type(m_io));
-
-        sock->connect(m_ep);
-        send_mess(sock);
-
-        m_tm.async_wait(
-                [](const error_code& ec) {
-                    //sock->send(buffer("hello?"));
-                });
-    }
-
-    void send_mess(sock_ptr sock) {
-        cout << mess.dump() << "	sendmess!" << endl;
-        //int length = mess.dump().length();
-        int length = mess.dump().length();
-        sock->async_send(buffer((void*)&length, sizeof(length)),
-                         bind(&this_type::send_handler, this, boost::asio::placeholders::error, sock));
-    }
-    //发送内容，同时设定倒计时
-    void send_handler(const error_code& ec, sock_ptr sock)
-    {
-        shared_const_buffer buffer_1(mess.dump());
-        //cout << mess.dump() << endl;
-        sock->async_send(buffer_1,
-                         [](const error_code& ec, std::size_t) {
-                             if (ec)
-                             {
-                                 cout << "mess send error!" << ec.value() << "+" << ec.message() << endl;
-                             }
-                             cout << "mess send complete!" << endl;
-                         });
+        std::size_t length2 = messFromGnu.length();
+        //sock->async_send(buffer((void *) &length2, sizeof(length2)), [](const error_code &ec, std::size_t t) {});
+        sock->send(buffer((void *) &length2, sizeof(length2)));
+        shared_const_buffer buffer_1(messFromGnu);
+        //sock->async_send(buffer_1, [](const error_code &ec, std::size_t t) {});
+        sock->send(buffer_1);
 
     }
-
-    void conn_handler(const error_code& ec, sock_ptr sock)
-    {
-        if (ec)
-        {
-            return;
-        }
-        cout << "recive from " << endl;
-        //int length = mess.length();
-        sock->async_write_some(buffer("hello"),
-                               bind(&this_type::send_handler, this, boost::asio::placeholders::error, sock));
-
-    }
-};
-
-int main()
-{
-    //json j = R"({"protocol": "keepalive"})"_json;
-    //std::string s = j.dump();
-    //string_ref ss(s);
-    //cout << ss.data() << endl;
-    //io_service io;
-    //ip::tcp::socket sock(io);
-    //ip::tcp::endpoint ep(ip::address::from_string("127.0.0.1"), 0x1234);
-    //sock.connect(ep);
-
-    //sock.async_send(buffer(j.dump()), [](const error_code& ,std::size_t) {cout << "send complete" << endl; });
-    try {
-        json j = R"({"protocol": "keepalive"})"_json;
-        client c1(j);
-        c1.run();
-    }
-    catch (const std::exception& e) {
-        e.what();
-    }
-
 }
